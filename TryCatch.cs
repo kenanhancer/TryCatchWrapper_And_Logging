@@ -5,7 +5,7 @@ public static class TryCatch
 {
     #region Invoke
 
-    public static void Invoke(Action action, Func<Exception, Task> finalAction = null)
+    public static void Invoke(Action action, Action<Exception> finalAction = null)
     {
         Invoke<object>(() =>
         {
@@ -17,10 +17,12 @@ public static class TryCatch
         finalAction);
     }
 
-    public static T Invoke<T>(Func<T> action, T defaultValue, Func<Exception, Task> finalAction = null)
+    public static T Invoke<T>(Func<T> action, T defaultValue, Action<Exception> finalAction = null)
     {
         if (action == null)
+        {
             throw new ArgumentNullException(nameof(action));
+        }
 
         Exception exception = null;
         Task task = null;
@@ -29,40 +31,31 @@ public static class TryCatch
         {
             T returnValue = action();
 
-            if (returnValue is Task)
-            {
-                task = returnValue as Task;
-
-                task.ContinueWith(async t =>
-                {
-                    if (t.Status == TaskStatus.Faulted)
-                    {
-                        ApplicationLogging.Logger.LogError(t.Exception, null);
-
-                        if (finalAction != null)
-                            await finalAction(t.Exception);
-                    }
-                });
-            }
-
             return returnValue;
         }
         catch (Exception ex)
         {
             exception = ex;
 
-            ApplicationLogging.Logger.LogError(ex, null);
+            ApplicationContext.Logger.LogError(ex, null);
 
-            throw ex;
+            if (finalAction != null)
+            {
+                finalAction?.Invoke(ex);
+            }
         }
         finally
         {
             if (task == null)
-                finalAction?.Invoke(exception).GetAwaiter().GetResult();
+            {
+                finalAction?.Invoke(exception);
+            }
         }
+
+        return default(T);
     }
 
-    public static T Invoke<T>(Func<T> action, Func<Exception, Task> finalAction = null)
+    public static T Invoke<T>(Func<T> action, Action<Exception> finalAction = null)
     {
         return Invoke<T>(action, default(T), finalAction);
     }
@@ -85,7 +78,9 @@ public static class TryCatch
     public static async Task<T> InvokeAsync<T>(Func<Task<T>> action, T defaultValue, Func<Exception, Task> finalAction = null)
     {
         if (action == null)
+        {
             throw new ArgumentNullException(nameof(action));
+        }
 
         Task<T> returnValue = await action().ContinueWith(async t =>
         {
@@ -95,10 +90,12 @@ public static class TryCatch
             {
                 //result = defaultValue;
 
-                ApplicationLogging.Logger.LogError(t.Exception, null);
+                ApplicationContext.Logger.LogError(t.Exception, null);
 
                 if (finalAction != null)
+                {
                     await finalAction(t.Exception);
+                }
 
                 //var fromResultMi = typeof(Task).GetMethod("FromResult").MakeGenericMethod(typeof(T));
 
@@ -106,7 +103,9 @@ public static class TryCatch
             }
 
             if (finalAction != null)
+            {
                 await finalAction(t.Exception);
+            }
 
             return await t;
         });

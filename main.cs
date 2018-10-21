@@ -4,20 +4,20 @@ using System.Threading.Tasks;
 class MainClass {
   public static void Main (string[] args) {
 
-    MainAsync(args).GetAwaiter().GetResult();
+    MainAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
   }
 
   public static async Task MainAsync(string[] args)
   {
     DefaultLoggerFactory defaultLoggerFactory = new DefaultLoggerFactory();
 
-    defaultLoggerFactory.AddProvider(new ConsoleLoggerProvider());
+    defaultLoggerFactory.SetProvider(new ConsoleLoggerProvider());
 
-    ApplicationLogging.ConfigureLogger(defaultLoggerFactory);
+    ApplicationContext.ConfigureLogger(defaultLoggerFactory, "MainLogger");
 
-    ApplicationLogging.Logger.LogDebug("TEST LOG FOR DEBUGGING");
+    ApplicationContext.Logger.LogDebug("TEST LOG FOR DEBUGGING");
     
-    TryCatch.Invoke(()=> DoAction());
+    //TryCatch.Invoke(()=> DoAction());
 
     await TryCatch.InvokeAsync(()=> DoActionAsync());
   }

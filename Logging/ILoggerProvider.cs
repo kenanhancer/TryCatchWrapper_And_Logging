@@ -1,6 +1,6 @@
-	using System;
+using System;
   
-  public interface ILoggerProvider : IDisposable
-	{
-		ILogger CreateLogger (string categoryName);
-	}
+public interface ILoggerProvider : IDisposable
+{
+    ILogger CreateLogger(string categoryName);
+}

@@ -2,5 +2,5 @@ using System;
 
 public interface ILogger
 {
-  void Log (LogLevel logLevel, Exception exception, Func<string> formatter);
+    void Log(LogLevel logLevel, Exception exception, Func<string> formatter);
 }
